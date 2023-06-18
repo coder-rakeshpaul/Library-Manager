@@ -87,8 +87,19 @@ class books:
         print('updating the data')
 
 class book_lending(student , books):
+    
     def __init__(self) -> None:
         super().__init__()
+
+# getting the list of books that are issued to students
+    sql = """SELECT book_code FROM book_student_map""";
+    cur.execute(sql)
+    val = cur.fetchall()
+    list_books_issued = []
+    for v in val:
+        list_books_issued.append(v[0])
+
+        
 
     def book_student_map(self , bk_code , st_id):
         """the agument that are needed are the book code and the student ID
@@ -107,10 +118,12 @@ class book_lending(student , books):
         try:
             sql = """INSERT INTO book_student_map (book_code, student_id , student_name , student_contact) VALUES (%s, %s , %s , %s)""";
             cur.execute(sql , (str(bk_code) , str(st_id) , str(student_name) , str(student_contact)))
-            # sql = """INSERT INTO book_student_map (book_code, student_id) VALUES (%s, %s)""";
-            # cur.execute(sql , (str(bk_code) , str(st_id)))
         except:
             print("Book is not available")
+
+    def del_map(self ,bk_code):
+        #delete the book from book_student_map indicating the book is returned by the previous student and is available for issuing
+        cur.execute("DELETE FROM book_student_map WHERE book_code = %s", (str(bk_code),))
 
 
         
@@ -121,6 +134,7 @@ class book_lending(student , books):
 Please ensure that when passing the data pass a string 
 """
 sol = book_lending()
-sol.book_student_map('43' , '566')
+sol.book_student_map('435' , '909')
+sol.book_student_map('43' , '463')
 cur.close()
 conn.close()
