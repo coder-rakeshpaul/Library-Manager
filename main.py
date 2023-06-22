@@ -1,4 +1,5 @@
 import psycopg2
+import datetime
 
 print("----Welcome human-----")
 # Create a connection object to the PostgreSQL server
@@ -115,15 +116,46 @@ class book_lending(student , books):
         cur.execute(sql , (str(st_id) ,))
         student_contact = cur.fetchone()[0]
 
+        sql = """SELECT title FROM books WHERE code = %s""";
+        cur.execute(sql , (str(bk_code) ,))
+        book_name = cur.fetchone()[0]
+
         try:
-            sql = """INSERT INTO book_student_map (book_code, student_id , student_name , student_contact) VALUES (%s, %s , %s , %s)""";
+            sql = """INSERT INTO book_student_map (book_code, student_id , student_name , student_contact) VALUES (%s, %s , %s , %s )""";
             cur.execute(sql , (str(bk_code) , str(st_id) , str(student_name) , str(student_contact)))
+
+            now = datetime.datetime.now()
+            current_date = now.strftime('%Y-%m-%d')
+
+            sql = """INSERT INTO history (book_code , book_name , student_id , student_name , issue_date) VALUES ( %s , %s , %s ,%s , %s)""";
+            cur.execute(sql , (bk_code , book_name ,st_id , student_name , current_date))
         except:
             print("Book is not available")
 
     def del_map(self ,bk_code):
         #delete the book from book_student_map indicating the book is returned by the previous student and is available for issuing
         cur.execute("DELETE FROM book_student_map WHERE book_code = %s", (str(bk_code),))
+
+        now = datetime.datetime.now()
+        current_date = now.strftime('%Y-%m-%d')
+
+        sql = 'SELECT id FROM history WHERE {} = %s ORDER BY id DESC LIMIT 1'.format('book_code')
+        cur.execute(sql, (bk_code,))
+
+        row = cur.fetchone()
+
+        if row is None:
+            id = None
+        else:
+            id = row[0]
+
+        sql = 'UPDATE {} SET {} = %s WHERE id = %s'.format('history', 'returned_date')
+        cur.execute(sql, (current_date, id))
+
+# Storing the data so that it can be used in the future
+# we store the data in history table with the book code, book name, student id  and student name
+
+
 
 
         
@@ -134,7 +166,6 @@ class book_lending(student , books):
 Please ensure that when passing the data pass a string 
 """
 sol = book_lending()
-sol.book_student_map('435' , '909')
-sol.book_student_map('43' , '463')
+sol.book_student_map('566' , '43')
 cur.close()
 conn.close()
