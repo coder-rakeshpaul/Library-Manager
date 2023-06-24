@@ -1,4 +1,5 @@
 import psycopg2
+from datetime import date
 import datetime
 
 print("----Welcome human-----")
@@ -103,12 +104,7 @@ class book_lending(student , books):
         
 
     def book_student_map(self , bk_code , st_id):
-        """the agument that are needed are the book code and the student ID
-            if the book is already issued it can't be given to the student
-            also ensure that a single student can only take 'N' books at a time
-            extra featuer that can be added is the time the book is issued and the time it is returned
-            make a fine calculation for late returning the book"""
-        
+
         books_per_student = 3  # Max number of books a student can take
         
         # Getting the name of the student who the book is being issued
@@ -155,9 +151,11 @@ class book_lending(student , books):
 
         # Get the current date
         now = datetime.datetime.now()
-        current_date = now.strftime('%Y-%m-%d')
+        return_date = now.strftime('%Y-%m-%d')
 
         # Adding data to history
+
+        # Getting the id of the book in the history table
         sql = 'SELECT id FROM history WHERE {} = %s ORDER BY id DESC LIMIT 1'.format('book_code')
         cur.execute(sql, (bk_code,))
 
@@ -168,12 +166,21 @@ class book_lending(student , books):
         else:
             id = row[0]
 
+        # updating the history table with the return date
         sql = 'UPDATE {} SET {} = %s WHERE id = %s'.format('history', 'returned_date')
-        cur.execute(sql, (current_date, id))
+        cur.execute(sql, (return_date, id))
 
-# Storing the data so that it can be used in the future
-# we store the data in history table with the book code, book name, student id  and student name
+        # getting the issue date
+        query = 'SELECT issue_date FROM history WHERE {} = %s'.format('id')
+        cur.execute(query , (id,))
+        issue_date = cur.fetchone()[0]
 
+        # Getting the number of days between issue and return of book
+        num_of_days = (now.date() - issue_date).days
+
+        # fine calculation
+        if num_of_days > 14:
+            print("You have been fined with " , (num_of_days - 14)*4 , "rupees")
 
 
 
@@ -185,6 +192,7 @@ class book_lending(student , books):
 Please ensure that when passing the data pass a string 
 """
 sol = book_lending()
-sol.del_map('566' )
+# sol.del_map('909' )
+# sol.book_student_map('909' , '43')
 cur.close()
 conn.close()
